@@ -1,47 +1,19 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import personService from './services/persons'
+import Notification from './components/Notification'
+import Filter from './components/Filter'
+import PersonForm from './components/PersonForm'
+import Persons from './components/Persons'
 
-
-const Filter = ({ filter, handleFilterChange }) => (
-  <div>
-    filter shown with <input value={filter} onChange={handleFilterChange} />
-  </div>
-)
-
-const PersonForm = ({ addPerson, newName, handleNameChange, newNumber, handleNumberChange }) => (
-  <form onSubmit={addPerson}>
-    <div>
-      name: <input value={newName} onChange={handleNameChange} />
-    </div>
-    <div>
-      number: <input value={newNumber} onChange={handleNumberChange} />
-    </div>
-    <div>
-      <button type="submit">add</button>
-    </div>
-  </form>
-)
-
-const Persons = ({ personsToShow, deletePerson }) => (
-  <ul>
-    {personsToShow.map(person => (
-      <Person key={person.id} person={person} deletePerson={deletePerson} />
-    ))}
-  </ul>
-)
-
-const Person = ({ person, deletePerson }) => (
-  <li>
-    {person.name} {person.number} <button onClick={() => deletePerson(person.id, person.name)}>delete</button>
-  </li>
-)
 
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
+  const [errorMessage, setErrorMessage] = useState(null)
+  const [successMessage, setSuccessMessage] = useState(null)
+
 
   useEffect(() => {
     personService
@@ -50,8 +22,6 @@ const App = () => {
         setPersons(initialPersons)
       })
   }, [])
-  console.log('render', persons.length, 'persons')
-
 
   const addPerson = (event) => {
     event.preventDefault()
@@ -71,13 +41,18 @@ const App = () => {
             setPersons(persons.map(person =>
               person.id !== nameExists.id ? person : returnedPerson
             ))
+            setSuccessMessage(`Updated ${newName}'s number.`)
+            setTimeout(() => {
+              setSuccessMessage(null)
+            }, 3000)
             setNewName('')
             setNewNumber('')
           })
           .catch(error => {
-            alert(
-              `Information of ${newName} has already been removed from the server`
-            )
+            setErrorMessage(`Information of ${newName} was already deleted from server`)
+            setTimeout(() => {
+            setErrorMessage(null)
+          }, 5000)
             setPersons(persons.filter(person => person.id !== nameExists.id))
           })
       }
@@ -91,6 +66,10 @@ const App = () => {
     .create(personObject)
     .then(returnedPerson => {
       setPersons(persons.concat(returnedPerson))
+      setSuccessMessage(`Added ${newName}`)
+          setTimeout(() => {
+            setSuccessMessage(null)
+          }, 3000)
       setNewName('')
       setNewNumber('')
     })
@@ -103,9 +82,16 @@ const App = () => {
         .remove(id)
         .then(() => {
           setPersons(persons.filter(person => person.id !== id))
+          setSuccessMessage(`Deleted ${name}`)
+          setTimeout(() => {
+            setSuccessMessage(null)
+          }, 3000)
         })
         .catch(error => {
-          alert(`The person '${name}' was already deleted from the server`)
+          setErrorMessage(`The person '${name}' was already deleted from server`)
+          setTimeout(() => {
+            setErrorMessage(null)
+          }, 5000)
           setPersons(persons.filter(person => person.id !== id))
         })
     }
@@ -130,6 +116,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={successMessage} isSuccess={true} />
+      <Notification message={errorMessage} isSuccess={false} />
 
       <Filter filter={filter} handleFilterChange={handleFilterChange} />
 
