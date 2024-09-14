@@ -25,6 +25,15 @@ const App = () => {
 
   const addPerson = (event) => {
     event.preventDefault()
+
+    if (!newName || !newNumber) {
+      setErrorMessage('Name or number cannot be empty')
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
+      return
+    }
+
     const nameExists = persons.find(person => person.name === newName)
 
     if (nameExists) {
